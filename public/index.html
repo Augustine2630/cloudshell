@@ -10,6 +10,7 @@
   <script src="/assets/xterm-addon-serialize/lib/xterm-addon-serialize.js"></script>
   <script src="/assets/xterm-addon-unicode11/lib/xterm-addon-unicode11.js"></script>
   <script src="/assets/xterm-addon-web-links/lib/xterm-addon-web-links.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     html::-webkit-scrollbar,
     body::-webkit-scrollbar,
@@ -51,6 +52,19 @@
 <body>
   <div id="terminal"></div>
   <script src="/terminal.js"></script>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      try {
+        const launchParams = window.Telegram.WebApp.initDataUnsafe;
+        console.log('Telegram Launch Params:', launchParams);
+      } catch (error) {
+        console.error('Failed to retrieve Telegram launch parameters:', error);
+      }
+    });
+  </script>
 </body>
 
 </html>
+
