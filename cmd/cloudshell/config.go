@@ -10,7 +10,7 @@ import (
 
 var conf = config.Map{
 	"allowed-hostnames": &config.StringSlice{
-		Default:   []string{"localhost"},
+		Default:   []string{"localhost", "abobus.tech"},
 		Usage:     "comma-delimited list of hostnames that are allowed to connect to the websocket",
 		Shorthand: "H",
 	},
