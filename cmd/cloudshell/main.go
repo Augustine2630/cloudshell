@@ -139,6 +139,8 @@ func runE(_ *cobra.Command, _ []string) error {
 	}
 
 	log.Infof("starting server on interface:port '%s'...", listenOnAddress)
-
-	return server.ListenAndServeTLS(os.Getenv("TLS_CERT"), os.Getenv("TLS_KEY"))
+	if os.Getenv("TLS_CERT") != "" && os.Getenv("TLS_KEY") != "" {
+		return server.ListenAndServeTLS(os.Getenv("TLS_CERT"), os.Getenv("TLS_KEY"))
+	}
+	return server.ListenAndServe()
 }
