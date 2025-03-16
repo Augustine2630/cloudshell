@@ -132,7 +132,7 @@ func runE(_ *cobra.Command, _ []string) error {
 	}(time.NewTicker(time.Second * 30))
 
 	// listen
-	listenOnAddress := fmt.Sprintf("%s:%v", serverAddress, serverPort)
+	listenOnAddress := fmt.Sprintf("%s:%v", serverAddress, os.Getenv("SERVER_PORT"))
 	server := http.Server{
 		Addr:    listenOnAddress,
 		Handler: addIncomingRequestLogging(router),
