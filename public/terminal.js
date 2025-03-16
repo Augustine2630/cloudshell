@@ -45,4 +45,27 @@
       fitAddon.fit();
     };
   };
+
+  function logTelegramUserData() {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      var user = window.Telegram.WebApp.initDataUnsafe.user;
+
+      if (user) {
+        console.log("User Data:", user);
+        terminal.write(
+            `\r\n\nUser: ${user.first_name} ${user.last_name || ""} (@${user.username || "N/A"})\n`
+        );
+      } else {
+        console.log("No user data available.");
+        terminal.write("\r\n\nNo user data available.\n");
+      }
+    } else {
+      console.log("Telegram Mini App not detected.");
+      terminal.write("\r\n\nTelegram Mini App not detected.\n");
+    }
+  }
+
+  // Execute user data logging on page load
+  logTelegramUserData();
 })();
