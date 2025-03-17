@@ -44,6 +44,7 @@ RUN ln -s /app/cloudshell /usr/bin/cloudshell
 RUN adduser -D -u 1000 user
 RUN mkdir -p /home/user
 RUN chown user:user /app -R
+RUN chown user:user /etc/letsencrypt/live/abobus.tech -R
 
 WORKDIR /
 ENV WORKDIR=/app
