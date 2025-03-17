@@ -26,18 +26,27 @@ RUN npm install
 FROM alpine:3.14.0
 WORKDIR /app
 RUN apk add --no-cache bash ncurses
+
+# Copy the certificate into the container
+COPY =/etc/letsencrypt/live/abobus.tech/fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
+COPY =/etc/letsencrypt/live/abobus.tech/privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
+
 COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
 COPY ./public /app/public
+
+# Set the environment variable for TLS_CERT
 ENV SERVER_PORT=443
-ENV TLS_KEY=/app/certs/privkey.pem
-ENV TLS_CERT=/app/certs/fullchain.pem
-CMD ls
+ENV TLS_CERT=/etc/letsencrypt/live/abobus.tech/fullchain.crt
+ENV TLS_KEY=/etc/letsencrypt/live/abobus.tech/privkey.crt
+
 RUN ln -s /app/cloudshell /usr/bin/cloudshell
 RUN adduser -D -u 1000 user
 RUN mkdir -p /home/user
 RUN chown user:user /app -R
+
 WORKDIR /
 ENV WORKDIR=/app
 USER user
+
 ENTRYPOINT ["/app/cloudshell"]
