@@ -30,8 +30,8 @@ COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
 COPY ./public /app/public
 ENV SERVER_PORT=443
-ENV TLS_KEY=/app/fullchain.pem
-ENV TLS_CERT=/app/privkey.pem
+ENV TLS_KEY=/etc/letsencrypt/live/abobus.tech/privkey.pem
+ENV TLS_CERT=/etc/letsencrypt/live/abobus.tech/fullchain.pem
 RUN ln -s /app/cloudshell /usr/bin/cloudshell
 RUN adduser -D -u 1000 user
 RUN mkdir -p /home/user
