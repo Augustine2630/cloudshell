@@ -29,8 +29,7 @@ RUN apk add --no-cache bash ncurses
 COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
 COPY ./public /app/public
-COPY /etc/letsencrypt/live/abobus.tech/privkey.pem /app/privkey.pem
-COPY /etc/letsencrypt/live/abobus.tech/fullchain.pem /app/fullchain.pem
+COPY /etc/letsencrypt/live/abobus.tech/ /app/
 ENV SERVER_PORT=443
 ENV TLS_KEY=/app/fullchain.pem
 ENV TLS_CERT=/app/privkey.pem
