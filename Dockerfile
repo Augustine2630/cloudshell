@@ -28,8 +28,8 @@ WORKDIR /app
 RUN apk add --no-cache bash ncurses
 
 # Copy the certificate into the container
-COPY =/etc/letsencrypt/live/abobus.tech/fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
-COPY =/etc/letsencrypt/live/abobus.tech/privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
+COPY /etc/letsencrypt/live/abobus.tech/fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
+COPY /etc/letsencrypt/live/abobus.tech/privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
 
 COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
