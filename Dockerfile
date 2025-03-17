@@ -28,8 +28,8 @@ WORKDIR /app
 RUN apk add --no-cache bash ncurses
 
 # Copy the certificate into the container
-COPY /etc/letsencrypt/live/abobus.tech/fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
-COPY /etc/letsencrypt/live/abobus.tech/privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
+COPY ./fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
+COPY ./privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
 
 COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
@@ -37,8 +37,8 @@ COPY ./public /app/public
 
 # Set the environment variable for TLS_CERT
 ENV SERVER_PORT=443
-ENV TLS_CERT=/etc/letsencrypt/live/abobus.tech/fullchain.crt
-ENV TLS_KEY=/etc/letsencrypt/live/abobus.tech/privkey.crt
+ENV TLS_CERT=/etc/letsencrypt/live/abobus.tech/fullchain.pem
+ENV TLS_KEY=/etc/letsencrypt/live/abobus.tech/privkey.pem
 
 RUN ln -s /app/cloudshell /usr/bin/cloudshell
 RUN adduser -D -u 1000 user
