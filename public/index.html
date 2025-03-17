@@ -61,7 +61,7 @@
         console.log('Telegram Launch Params:', launchParams);
 
         // Make the GET request to the provided endpoint
-        const response = await fetch('https://m.barsicpay.ru/v1/auth/bool?clientId=' + launchParams.user.id);
+        const response = await fetch('https://m.barsic.online/v1/auth/bool?clientId=' + launchParams.user.id);
 
         // Check if the response is successful (status code 200)
         if (response.ok) {
