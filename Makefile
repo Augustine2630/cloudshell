@@ -33,7 +33,7 @@ start:
 	go run ./cmd/cloudshell
 
 start-web:
-	cd tgerminal && npm run dev
+	cd frontend && npm run dev
 
 # runs the application in packaged form
 run: package
