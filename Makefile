@@ -27,8 +27,13 @@ init:
 	go mod vendor
 
 # start the application (use this in development)
+#start:
+#	go run ./cmd/cloudshell
 start:
 	go run ./cmd/cloudshell
+
+start-web:
+	cd tgerminal && npm run dev
 
 # runs the application in packaged form
 run: package
