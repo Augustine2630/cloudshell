@@ -19,7 +19,7 @@ func main() {
 
 	// Отдача статики
 	fs := http.FileServer(http.Dir(*staticDir))
-	http.Handle("/", fs)
+	http.Handle("/front", fs)
 
 	// Получение порта из переменной окружения
 	port := os.Getenv("SERVER_PORT")
