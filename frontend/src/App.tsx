@@ -1,44 +1,51 @@
 import './App.css'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import HostListComponent from './component/HostListComponent'
 import TerminalComponent from './component/TerminalComponent'
+
+declare global {
+    interface Window {
+        Telegram: any;
+    }
+}
 
 function App() {
     const [selectedHostIp, setSelectedHostIp] = useState<string | null>(null)
     const [isAuthenticated, setAuthenticated] = useState<boolean>(false)
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
+    const [, setUserData] = useState<any>(null)
 
-    const handleLogin = () => {
-        // Заменить на реальную проверку авторизации
-        if (username === 'admin' && password === '1234') {
-            setAuthenticated(true)
+    useEffect(() => {
+        const tg = window.Telegram?.WebApp
+        if (tg) {
+            const userId = tg.initDataUnsafe?.user?.id
+
+            if (!userId) {
+                setAuthenticated(true)
+                return
+            }
+
+            // Проверка по API
+            fetch(`https://inner.barsic.online/v1/auth/bool?clientId=${userId}`)
+                .then(res => res.json())
+                .then((data: boolean) => {
+                    if (data) {
+                        setAuthenticated(true)
+                        setUserData(tg.initDataUnsafe.user)
+                    } else {
+                        alert("Доступ запрещён")
+                    }
+                })
+                .catch(err => {
+                    console.error("Ошибка запроса авторизации:", err)
+                    alert("Ошибка соединения с сервером")
+                })
         } else {
-            alert('Неверный логин или пароль')
+            alert("Telegram WebApp не найден")
         }
-    }
+    }, [])
 
     if (!isAuthenticated) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20vh' }}>
-                <h2>Авторизация</h2>
-                <input
-                    type="text"
-                    placeholder="Логин"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    style={{ marginBottom: '10px' }}
-                />
-                <input
-                    type="password"
-                    placeholder="Пароль"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ marginBottom: '10px' }}
-                />
-                <button onClick={handleLogin}>Войти</button>
-            </div>
-        )
+        return <div>Загрузка авторизации через Telegram...</div>
     }
 
     return (
