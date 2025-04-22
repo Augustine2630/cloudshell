@@ -38,7 +38,7 @@ COPY --from=frontend /frontend/dist ./dist
 RUN chown -R user:user /app
 
 # Set env
-ENV SERVER_PORT=8080
+ENV SERVER_PORT=80
 ENV WORKDIR=/app
 
 USER user
