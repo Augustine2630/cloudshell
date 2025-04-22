@@ -5,7 +5,7 @@ import { FitAddon } from "xterm-addon-fit";
 import { WebLinksAddon } from "xterm-addon-web-links";
 import { Unicode11Addon } from "xterm-addon-unicode11";
 import { SerializeAddon } from "xterm-addon-serialize";
-import 'xterm/css/xterm.css';
+import "xterm/css/xterm.css";
 
 interface Props {
     ip: string;
@@ -14,6 +14,7 @@ interface Props {
 const TerminalComponent: React.FC<Props> = ({ ip }) => {
     const terminalRef = useRef<HTMLDivElement | null>(null);
     const terminalInstance = useRef<Terminal | null>(null);
+    const fitAddonRef = useRef<FitAddon | null>(null);
     const [isTerminalReady, setTerminalReady] = useState(false);
 
     useEffect(() => {
@@ -22,13 +23,13 @@ const TerminalComponent: React.FC<Props> = ({ ip }) => {
         terminalInstance.current = new Terminal({
             cursorBlink: true,
             screenReaderMode: true,
-            cols: 128,
             allowProposedApi: true,
         });
 
-        if (terminalRef.current) {
-            setTerminalReady(true);
-        }
+        fitAddonRef.current = new FitAddon();
+        terminalInstance.current.loadAddon(fitAddonRef.current);
+
+        setTerminalReady(true);
 
         return () => {
             if (terminalInstance.current) {
@@ -39,43 +40,56 @@ const TerminalComponent: React.FC<Props> = ({ ip }) => {
     }, []);
 
     useEffect(() => {
-        if (isTerminalReady && terminalRef.current) {
+        if (isTerminalReady && terminalRef.current && terminalInstance.current) {
             const term = terminalInstance.current;
-            if (term && terminalRef.current) {
-                term.open(terminalRef.current);
+            const fitAddon = fitAddonRef.current!;
+            term.open(terminalRef.current);
 
-                const fitAddon = new FitAddon();
-                const webLinksAddon = new WebLinksAddon();
-                const unicode11Addon = new Unicode11Addon();
-                const serializeAddon = new SerializeAddon();
-                const ws = new WebSocket(`wss://${ip}/xterm.js`);
-                const attachAddon = new AttachAddon(ws);
+            const webLinksAddon = new WebLinksAddon();
+            const unicode11Addon = new Unicode11Addon();
+            const serializeAddon = new SerializeAddon();
+            const ws = new WebSocket(`wss://${ip}/xterm.js`);
+            const attachAddon = new AttachAddon(ws);
 
-                term.loadAddon(fitAddon);
-                term.loadAddon(webLinksAddon);
-                term.loadAddon(unicode11Addon);
-                term.loadAddon(serializeAddon);
+            term.loadAddon(webLinksAddon);
+            term.loadAddon(unicode11Addon);
+            term.loadAddon(serializeAddon);
 
-                ws.onopen = () => {
-                    term.loadAddon(attachAddon);
-                    term.focus();
-                    fitAddon.fit();
-                };
-
-                ws.onclose = () => {
-                    term.write("\r\n\nConnection terminated (refresh to restart)\n");
-                };
-
-                window.addEventListener("resize", () => fitAddon.fit());
+            ws.onopen = () => {
+                term.loadAddon(attachAddon);
                 fitAddon.fit();
-            }
+                term.focus();
+            };
+
+            ws.onclose = () => {
+                term.write("\r\n\nConnection terminated (refresh to restart)\n");
+            };
+
+            const handleResize = () => {
+                fitAddon.fit();
+            };
+
+            window.addEventListener("resize", handleResize);
+            fitAddon.fit();
+
+            return () => {
+                window.removeEventListener("resize", handleResize);
+            };
         }
     }, [isTerminalReady, ip]);
 
     return (
         <div
             ref={terminalRef}
-            style={{ height: "100vh", width: "100vw", backgroundColor: "#000" }}
+            style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                height: "100vh",
+                width: "100vw",
+                backgroundColor: "#000",
+                overflow: "hidden",
+            }}
         />
     );
 };
