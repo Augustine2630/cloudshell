@@ -33,7 +33,7 @@ COPY ./privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
 
 COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
 COPY --from=frontend /app/node_modules /app/node_modules
-COPY ./public /app/public
+COPY .public /app/public
 
 # Set the environment variable for TLS_CERT
 ENV SERVER_PORT=443

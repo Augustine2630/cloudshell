@@ -119,7 +119,7 @@ func runE(_ *cobra.Command, _ []string) error {
 	router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir(depenenciesDirectory))))
 
 	// this is the endpoint for the root path aka website
-	publicAssetsDirectory := path.Join(workingDirectory, "./public")
+	publicAssetsDirectory := path.Join(workingDirectory, "./.public")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir(publicAssetsDirectory)))
 
 	// start memory logging pulse

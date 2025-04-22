@@ -12,7 +12,7 @@ commandTests:
 # ref https://github.com/GoogleContainerTools/container-structure-test#file-existence-tests
 fileExistenceTests:
   - name: "frontend files exist"
-    path: /app/public
+    path: /app/.public
     shouldExist: true
   - name: "frontend assets exist"
     path: /app/node_modules
