@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: cr.selcloud.ru/barsic-registry/barsic-object-handler
+  tag: feature_dark_mode_12
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    app.kubernetes.io/instance: stand
+  ingressClassName: nginx
+  hosts:
+    - s3.barsic.online
+
+config:
+  app:
+    port: 80
+    env: development
+    globalTimeout: 5
+    logLevel: debug
+  s3:
+    region: ru-1

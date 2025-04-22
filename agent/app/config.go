@@ -1,14 +1,14 @@
-package main
+package app
 
 import (
-	"cloudshell/internal/log"
+	"cloudagent/internal/log"
 	"fmt"
 	"strings"
 
 	"github.com/usvc/go-config"
 )
 
-var conf = config.Map{
+var Conf = config.Map{
 	"allowed-hostnames": &config.StringSlice{
 		Default:   []string{"localhost", "abobus.tech"},
 		Usage:     "comma-delimited list of hostnames that are allowed to connect to the websocket",
@@ -47,35 +47,24 @@ var conf = config.Map{
 		Default: "debug",
 		Usage:   fmt.Sprintf("defines the minimum level of logs to show - one of ['%s']", strings.Join(log.ValidLevelStrings, "', '")),
 	},
-	"path-liveness": &config.String{
-		Default: "/healthz",
-		Usage:   "url path to the liveness probe endpoint",
-	},
-	"path-metrics": &config.String{
-		Default: "/metrics",
-		Usage:   "url path to the prometheus metrics endpoint",
-	},
-	"path-readiness": &config.String{
-		Default: "/readyz",
-		Usage:   "url path to the readiness probe endpoint",
-	},
 	"path-xtermjs": &config.String{
 		Default: "/xterm.js",
 		Usage:   "url path to the endpoint that xterm.js should attach to",
 	},
-	"server-addr": &config.String{
-		Default:   "0.0.0.0",
-		Usage:     "ip interface the server should listen on",
-		Shorthand: "a",
+	"workdir": &config.String{
+		Default:   ".",
+		Usage:     "working directory",
+		Shorthand: "w",
 	},
 	"server-port": &config.Int{
 		Default:   8376,
 		Usage:     "port the server should listen on",
 		Shorthand: "p",
 	},
-	"workdir": &config.String{
-		Default:   ".",
-		Usage:     "working directory",
-		Shorthand: "w",
+	"tls-cert": &config.String{
+		Usage: "tls certificate for agent",
+	},
+	"tls-key": &config.String{
+		Usage: "tls key certificate for agent",
 	},
 }

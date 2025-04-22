@@ -2,7 +2,7 @@ package xtermjs
 
 import (
 	"bytes"
-	"cloudshell/internal/log"
+	"cloudagent/internal/log"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -79,6 +79,7 @@ func GetHandler(opts HandlerOpts) func(http.ResponseWriter, *http.Request) {
 		clog.Debugf("starting new tty using command '%s' with arguments ['%s']...", terminal, strings.Join(args, "', '"))
 		cmd := exec.Command(terminal, args...)
 		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, "TERM=xterm-256color")
 		tty, err := pty.Start(cmd)
 		if err != nil {
 			message := fmt.Sprintf("failed to start tty: %s", err)

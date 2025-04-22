@@ -1,0 +1,36 @@
+.hostList {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    color: white;
+}
+
+.hostCard {
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #111;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.hostCard:hover {
+    transform: scale(1.02);
+}
+
+.hostStatus {
+    font-weight: bold;
+}
+
+.statusOnline {
+    color: #00ff88;
+}
+
+.statusOffline {
+    color: #ff4444;
+}
+
+.statusLoading {
+    color: #ffaa00;
+}

@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//a
+// a
 func getConnectionUpgrader(
 	allowedHostnames []string,
 	maxBufferSizeBytes int,

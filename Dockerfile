@@ -1,53 +1,49 @@
-FROM golang:1.16-alpine AS backend
-WORKDIR /go/src/cloudshell
-COPY ./cmd ./cmd
-COPY ./internal ./internal
-COPY ./pkg ./pkg
-COPY ./go.mod .
-COPY ./go.sum .
+### --- Backend build stage ---
+FROM golang:1.23.5-alpine AS backend
+
+WORKDIR /app
+
+COPY ./tgerminal ./
+
 ENV CGO_ENABLED=0
-RUN go mod vendor
 ARG VERSION_INFO=dev-build
+
 RUN go build -a -v \
-  -ldflags " \
-  -s -w \
-  -extldflags 'static' \
-  -X main.VersionInfo='${VERSION_INFO}' \
-  " \
-  -o ./bin/cloudshell \
-  ./cmd/cloudshell
+  -ldflags="-s -w -extldflags 'static' -X main.VersionInfo=${VERSION_INFO}" \
+  -o ./cloudsh ./cmd/main.go
 
-FROM node:16.0.0-alpine AS frontend
-WORKDIR /app
-COPY ./package.json .
-COPY ./package-lock.json .
-RUN npm install
+### --- Frontend build stage ---
+FROM node:21.0.0-alpine AS frontend
 
+WORKDIR /frontend
+COPY ./frontend ./
+RUN npm install && npm run build
+
+### --- Final image ---
 FROM alpine:3.14.0
+
+# Create user and minimal dependencies
+RUN adduser -D -u 1000 user && \
+    apk add --no-cache bash ncurses
+
 WORKDIR /app
-RUN apk add --no-cache bash ncurses
 
-# Copy the certificate into the container
-COPY ./fullchain.pem /etc/letsencrypt/live/abobus.tech/fullchain.pem
-COPY ./privkey.pem /etc/letsencrypt/live/abobus.tech/privkey.pem
+# Copy backend binary
+COPY --from=backend /app/cloudsh ./cloudsh
 
-COPY --from=backend /go/src/cloudshell/bin/cloudshell /app/cloudshell
-COPY --from=frontend /app/node_modules /app/node_modules
-COPY .public /app/public
+# Copy frontend build output
+COPY --from=frontend /frontend/dist ./dist
 
-# Set the environment variable for TLS_CERT
-ENV SERVER_PORT=443
-ENV TLS_CERT=/etc/letsencrypt/live/abobus.tech/fullchain.pem
-ENV TLS_KEY=/etc/letsencrypt/live/abobus.tech/privkey.pem
+# Set permissions
+RUN chown -R user:user /app
 
-RUN ln -s /app/cloudshell /usr/bin/cloudshell
-RUN adduser -D -u 1000 user
-RUN mkdir -p /home/user
-RUN chown user:user /app -R
-RUN chown user:user /etc/letsencrypt/live/abobus.tech -R
-
-WORKDIR /
+# Set env
+ENV SERVER_PORT=8080
 ENV WORKDIR=/app
-USER user
 
-ENTRYPOINT ["/app/cloudshell"]
+USER user
+WORKDIR /
+
+ENTRYPOINT ["/app/cloudsh"]
+CMD ["-staticDir=/app/dist"]
+

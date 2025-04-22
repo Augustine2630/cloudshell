@@ -1,13 +1,20 @@
 import './App.css'
-import TerminalComponent from "./component/TerminalComponent.tsx";
+import { useState } from 'react'
+import HostListComponent from './component/HostListComponent'
+import TerminalComponent from './component/TerminalComponent'
 
 function App() {
+    const [selectedHostIp, setSelectedHostIp] = useState<string | null>(null)
 
-  return (
-    <>
-     <TerminalComponent/>
-    </>
-  )
+    return (
+        <>
+            {selectedHostIp ? (
+                <TerminalComponent ip={selectedHostIp} />
+            ) : (
+                <HostListComponent onSelectHost={(ip: string) => setSelectedHostIp(ip)} />
+            )}
+        </>
+    )
 }
 
 export default App

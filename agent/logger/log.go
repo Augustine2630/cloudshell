@@ -1,13 +1,13 @@
-package main
+package logger
 
 import (
-	"cloudshell/internal/log"
+	"cloudagent/internal/log"
 	"net/http"
 	"runtime"
 )
 
 // createRequestLog returns a logger with relevant request fields
-func createRequestLog(r *http.Request, additionalFields ...map[string]interface{}) log.Logger {
+func CreateRequestLog(r *http.Request, additionalFields ...map[string]interface{}) log.Logger {
 	fields := map[string]interface{}{}
 	if len(additionalFields) > 0 {
 		fields = additionalFields[0]
@@ -25,7 +25,7 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 	return log.WithFields(fields)
 }
 
-func createMemoryLog() log.Logger {
+func CreateMemoryLog() log.Logger {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	return log.WithFields(map[string]interface{}{
