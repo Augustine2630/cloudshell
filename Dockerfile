@@ -1,17 +1,3 @@
-### --- Backend build stage ---
-FROM golang:1.23.5-alpine AS backend
-
-WORKDIR /app
-
-COPY ./tgerminal ./
-
-ENV CGO_ENABLED=0
-ARG VERSION_INFO=dev-build
-
-RUN go build -a -v \
-  -ldflags="-s -w -extldflags 'static' -X main.VersionInfo=${VERSION_INFO}" \
-  -o ./cloudsh ./cmd/main.go
-
 ### --- Frontend build stage ---
 FROM node:21.0.0-alpine AS frontend
 
@@ -20,30 +6,21 @@ COPY ./frontend ./
 RUN npm install && npm run build
 
 ### --- Final image ---
-FROM alpine:3.14.0
+FROM node:21.0.0-alpine
 
-# Create user and minimal dependencies
-RUN adduser -D -u 1000 user && \
-    apk add --no-cache bash ncurses
+# Install http-server globally
+RUN npm install -g http-server
 
+# Create app directory and set permissions
 WORKDIR /app
-
-# Copy backend binary
-COPY --from=backend /app/cloudsh ./cloudsh
-
-# Copy frontend build output
 COPY --from=frontend /frontend/dist ./dist
 
-# Set permissions
-RUN chown -R user:user /app
-
-# Set env
-ENV SERVER_PORT=8080
-ENV WORKDIR=/app
-
+# Use a non-root user (optional, security best practice)
+RUN adduser -D user && chown -R user:user /app
 USER user
-WORKDIR /
 
-ENTRYPOINT ["/app/cloudsh"]
-CMD ["-staticDir=/app/dist"]
+# Expose the port http-server will use
+EXPOSE 8080
 
+# Serve the frontend build
+CMD ["http-server", "dist", "-p", "8080"]
