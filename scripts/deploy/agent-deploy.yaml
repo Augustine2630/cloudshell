@@ -1,0 +1,84 @@
+---
+- name: Установка cloudagent на удалённый сервер
+  hosts: all
+  become: false
+  gather_facts: yes
+
+  vars:
+    bin_src_path: "/Users/augustine/GolandProjects/cloudshell/scripts/deploy/bin"
+    bin_dir: "/root/cloudagent"
+    bin_dest_path: "/root/cloudagent/cloudagent"
+    service_name: "cloudagent"
+    systemd_unit_path: "/etc/systemd/system/cloudagent.service"
+
+  tasks:
+
+    - name: Определение архитектуры
+      set_fact:
+        arch: "{{ ansible_architecture }}"
+        os: "{{ ansible_system | lower }}"
+
+    - name: Отладочная информация
+      debug:
+        msg: "OS: {{ os }}, Arch: {{ arch }}"
+
+    - name: Определение имени бинарника
+      set_fact:
+        bin_name: >-
+          {{
+            'cloudagent-darwin-amd64' if os == 'darwin' and arch == 'x86_64' else
+            'cloudagent-linux-amd64' if os == 'linux' and arch == 'x86_64' else
+            'cloudagent-linux-arm64' if os == 'linux' and arch in ['aarch64', 'arm64'] else
+            'unsupported'
+          }}
+
+    - name: Проверка на поддержку архитектуры
+      fail:
+        msg: "Неподдерживаемая архитектура/ОС: OS={{ os }}, Arch={{ arch }}"
+      when: bin_name == 'unsupported'
+    - name: Создание директории под бинарник, если не существует
+      file:
+        path: "{{ bin_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+    - name: Копирование подходящего бинарника
+      copy:
+        src: "{{ bin_src_path }}/{{ bin_name }}"
+        dest: "{{ bin_dest_path }}"
+        mode: '0755'
+      notify: Включить и перезапустить cloudagent
+    - name: Создание systemd сервиса (только для Linux)
+      when: os == 'linux'
+      block:
+        - name: Создание systemd unit-файла для cloudagent
+          copy:
+            dest: "{{ systemd_unit_path }}"
+            content: |
+              [Unit]
+              Description=Cloud Agent Service
+              After=network.target
+              
+              [Service]
+              ExecStart={{ bin_dest_path }} --tls-cert=/etc/letsencrypt/live/abobus.tech/fullchain.pem --tls-key=/etc/letsencrypt/live/abobus.tech/privkey.pem --server-port=443 --allowed-hostnames="abobus.tech"
+              Restart=always
+              RestartSec=5
+              User=root
+              
+              [Install]
+              WantedBy=multi-user.target
+          notify:
+            - Перезагрузить systemd
+            - Включить и запустить cloudagent
+
+  handlers:
+    - name: Перезагрузить systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Включить и перезапустить cloudagent
+      systemd:
+        name: cloudagent
+        enabled: yes
+        state: restarted

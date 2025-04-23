@@ -13,133 +13,83 @@ image_registry ?= docker.io
 # image_namespace specifies docker.io/THIS_PART/image:tag of the Docker image path
 image_namespace ?= zephinzer
 # image_name specifies docker.io/namespace/THIS_PART:tag of the Docker image path
-image_name ?= cloudshell
+image_name ?= cloudagent
 # image_name specifies docker.io/namespace/image:THIS_PART of the Docker image path
 image_tag ?= $(version)
 
 image_url := $(image_registry)/$(image_namespace)/$(image_name)
 
-binary_name := $(image_name)-${GOOS}-${GOARCH}${BIN_EXT}
+binary_name := $(image_name)-$(GOOS)-$(GOARCH)-$(BIN_EXT)
 
-# initialises the project (run this before all else)
+image_name := cloudagent
+BIN_EXT = $(if $(filter windows,$(1)),exe,bin)
+
+platforms = \
+    linux/amd64 \
+    linux/arm64 \
+    darwin/amd64 \
+    darwin/arm64
+
+version := 1.2.3
+
 init:
 	npm install
 	go mod vendor
 
-# start the application (use this in development)
-start:
-	go run ./cmd/cloudshell
+start-agent:
+	go run ./agent/cmd/main.go --server-port=8080 --allowed-hostnames="abobus.tech"
 
-# runs the application in packaged form
-run: package
-	docker run -it -p 8376:8376 $(image_url):latest
+start-web:
+	cd frontend && npm run dev
 
-# builds the application binary
-build:
-	CGO_ENABLED=0 \
+define build_template
+build-$(1)-$(2):
+	@echo "Building for $(1)/$(2)..."
+	cd agent && \
+	CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) \
 	go build -a -v \
-		-ldflags " \
+		-ldflags "\
 			-s -w \
 			-extldflags 'static' \
 			-X main.VersionInfo='$(version)' \
 		" \
-		-o ./bin/$(binary_name) ./cmd/cloudshell
+		-o ../scripts/deploy/bin/$(image_name)-$(1)-$(2) ./cmd/main.go
+endef
 
-# compresses the application binary
-compress:
-	ls -lah ./bin/$(binary_name)
-	upx -9 -v -o ./bin/.$(binary_name) \
-		./bin/$(binary_name)
-	upx -t ./bin/.$(binary_name)
-	rm -rf ./bin/$(binary_name)
-	mv ./bin/.$(binary_name) \
-		./bin/$(binary_name)
-	sha256sum -b ./bin/$(binary_name) \
-		| cut -f 1 -d ' ' > ./bin/$(binary_name).sha256
-	ls -lah ./bin/$(binary_name)
 
-# lints this image for best-practices
-lint:
-	hadolint ./Dockerfile
+$(foreach p,$(platforms),$(eval $(call build_template,$(word 1,$(subst /, ,$(p))),$(word 2,$(subst /, ,$(p))))))
 
-# tests this iamge for structure integrity
-test: package
-	container-structure-test test --config ./.Dockerfile.yaml --image $(image_url):latest
+# Makefile target to build all
+build-all: $(foreach p,$(platforms),build-$(word 1,$(subst /, ,$(p)))-$(word 2,$(subst /, ,$(p))))
+	@echo "All builds complete!"
 
-# scans this image for known vulnerabilities
-scan: package
-	trivy image \
-		--output trivy.json \
-		--format json \
-		$(image_url):$(version)
-	trivy image $(image_url):$(version)
+deploy-agent:
+	ansible-playbook -i scripts/deploy/hosts.ini scripts/deploy/agent-deploy.yaml
 
-# packages project into a docker image
-package:
-	docker build ${build_args} \
-		--build-arg VERSION_INFO=$(version) \
-		--tag $(image_url):latest \
-		.
-	docker tag $(image_url):latest \
-		$(image_url):$(version)
+build-and-deploy-agent: build-all deploy-agent
+	@echo "✅ agent complete!"
 
-# packages example project in this project into a docker image using the docker build cache
-package-example: package
-	if [ "${id}" = "" ]; then \
-		printf -- '\033[1m\033[31m$${id} was not specified\033[0m\n'; \
-		exit 1; \
-	fi
-	docker build \
-		--build-arg IMAGE_NAMESPACE=$(image_registry)/$(image_namespace) \
-		--build-arg IMAGE_NAME=$(image_name) \
-		--build-arg IMAGE_TAG=$(version) \
-		--tag $(image_url)-${id}:latest \
-		--file ./examples/${id}/Dockerfile \
-		.
-	docker tag $(image_url)-${id}:latest \
-		$(image_url)-${id}:$(version)
+build-frontend:
+	rm -rf bin
+	@bash -c '\
+		cd frontend; \
+		npm install; \
+		npm run build \
+	'
+	mkdir -p bin/dist && cp -r frontend/dist bin
 
-# publishes primary docker image of this project
-publish:
-	@$(MAKE) package
-	@$(MAKE) publish-ci
+build-backend:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    	go build -a -v \
+    		-ldflags "\
+    			-s -w \
+    			-extldflags 'static' \
+    			-X main.VersionInfo='$(version)' \
+    		" \
+    		-o ./bin/tgerminal ./tgerminal/cmd/main.go
 
-# publishes primary docker image of this project without running package
-publish-ci:
-	-docker push $(image_url):latest
-	docker push $(image_url):$(version)
+build-build-atomic: build-frontend build-backend
+	@echo "Успешный билд дистров"
 
-# publishes example docker image of this project
-publish-example:
-	@$(MAKE) package-example id=${id}	
-	@$(MAKE) publish-example-ci id=${id}	
-
-# publishes example docker image of this project without running package
-publish-example-ci:
-	-docker push $(image_url)-${id}:latest
-	docker push $(image_url)-${id}:$(version)	
-
-# exports this image into a tarball (use in ci cache)
-export: package
-	mkdir -p $(export_path)
-	docker save $(image_namespace)/$(image_name):latest -o $(export_path)/$(image_namespace)-$(image_name).tar.gz
-
-# exports the example image into a tarball (use in ci cache)
-export-example: package-example
-	mkdir -p $(export_path)
-	docker save $(image_namespace)/$(image_name)-${id}:latest -o $(export_path)/$(image_namespace)-$(image_name)-${id}.tar.gz
-
-# import this image from a tarball (use in ci cache)
-import:
-	mkdir -p $(export_path)
-	-docker load -i $(export_path)/$(image_namespace)-$(image_name).tar.gz
-
-# import the example image into a tarball (use in ci cache)
-import-example:
-	mkdir -p $(export_path)
-	-docker load -i $(export_path)/$(image_namespace)-$(image_name)-${id}.tar.gz
-
-.ssh:
-	mkdir -p ./.ssh
-	ssh-keygen -t rsa -b 8192 -f ./.ssh/id_rsa -q -N ""
-	cat ./.ssh/id_rsa | base64 -w 0 > ./.ssh/id_rsa.base64
+build-image:
+	docker build -f Dockerfile . -t tgerminal:dev

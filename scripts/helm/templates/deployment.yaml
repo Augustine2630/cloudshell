@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          env:
+            - name: S3_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-secret
+                  key: keyId
+            - name: S3_ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-secret
+                  key: accessId
+            - name: GIN_MODE
+              value: release
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/application.yaml
+              subPath: application.yaml
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Chart.Name }}-config
+      imagePullSecrets:
+        - name: selectel-registry-credentials
